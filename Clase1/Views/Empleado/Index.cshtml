@@ -1,0 +1,301 @@
+﻿@{
+    ViewData["Title"] = "Employee Management";
+        
+}
+
+<div class="text-center">
+    <h1 class="mt-4">Gestión de Empleados</h1>
+    <button class="btn btn-primary mb-3" onclick="openCreateModal()">Agregar Empleado</button>
+
+    <div class="row">
+        <div class="col-md-12">
+            <table id="empleadosTable" class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Email</th>
+                        <th>DUI</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var empleado in ViewBag.Empleados)
+                    {
+                        <tr id="row-@empleado.Id">
+                            <td>@empleado.Nombre</td>
+                            <td>@empleado.Apellido</td>
+                            <td>@empleado.Email</td>
+                            <td>@empleado.Dui</td>
+                            <td>
+                                <button class="btn btn-warning" onclick="openEditModal('@empleado.Id')">Editar</button>
+                                <button class="btn btn-danger" onclick="confirmDelete('@empleado.Id')">Eliminar</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear/Editar Empleado -->
+<div class="modal fade" id="empleadoModal" tabindex="-1" aria-labelledby="empleadoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="empleadoModalLabel">Agregar/Editar Empleado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="empleadoForm">
+                    <input type="hidden" id="empleadoId">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="apellido" class="form-label">Apellido</label>
+                        <input type="text" class="form-control" id="apellido" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dui" class="form-label">DUI</label>
+                        <input type="number" class="form-control" id="dui" required>
+                        <div class="mb-3">
+                            <label for="numTelefonico" class="form-label">Numero Telefono</label>
+                            <input type="tel" class="form-control" id="numeroTel" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="empleadoType" class="form-label">Tipo Empleado</label>
+                            @* <input type ="text" class="form-select" id="tipoEmpleado" required /> *@
+
+                            <select class="form-select" id="tipoEmpleadoId" aria-label="Employee Type">
+                                @foreach (var item in ViewBag.TipoEmpleados)
+                                {
+                                    <option value="@item.Id">@item.Descripcion</option>
+                                }
+                            </select>
+                            
+                            
+                        </div>
+                    </div>
+                    
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveButton" onclick="saveEmpleado()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#empleadosTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+            }
+        });
+    });
+
+    function openCreateModal() {
+        $('#empleadoModalLabel').text('Agregar Empleado');
+        $('#empleadoForm')[0].reset();
+        $('#empleadoId').val('0');
+        $('#empleadoModal').modal('show');
+    }
+
+    function openEditModal(id) {
+        try {
+
+            var data = {
+                Id: parseInt(id)
+            };
+
+            console.log('', data);
+
+            $.ajax({
+              
+                url: '/Empleado/GetEmpleadoById/',
+                type: 'POST',
+                data: data,
+                success: function (empleado) {
+                    $('#empleadoModalLabel').text('Editar Empleado');
+                    $('#empleadoId').val(empleado.id);
+                    $('#nombre').val(empleado.nombre);
+                    $('#apellido').val(empleado.apellido);
+                    $('#email').val(empleado.email);
+                    $('#dui').val(empleado.dui);
+                    $('#numeroTel').val(empleado.numeroTelefonico);
+
+                    $('#tipoEmpleadoId').val(empleado.tipoEmpleadoId);
+
+                    $('#empleadoModal').modal('show');
+                },
+                error: function () {
+                    Swal.fire(
+                        'Error',
+                        'Ocurrió un error al guardar el empleado.',
+                        'error'
+                    );
+                }
+                
+
+
+
+
+
+
+
+
+                /*url: '/Empleado/GetEmpleadoById/',
+                type: 'GET',
+                success: function (empleado) {
+                    console.log('empleado -> ', empleado)
+
+                    $('#empleadoModalLabel').text('Editar Empleado');
+                    $('#empleadoId').val(empleado.id);
+                    $('#nombre').val(empleado.nombre);
+                    $('#apellido').val(empleado.apellido);
+                    $('#email').val(empleado.email);
+                    $('#dui').val(empleado.dui);
+                    $('#numeroTel').val(empleado.numeroTelefonico);
+                    
+                    //$('#tipoEmpleadoId').val(empleado[0].tipoEmpleadoId);
+
+                    $('#empleadoModal').modal('show');
+                },
+                error: function () {
+                    Swal.fire(
+                        'Error',
+                        'No se pudo cargar la información del empleado.',
+                        'error'
+                    );
+                }*/
+            });
+        } catch (error) {
+            console.error('Error al abrir el modal de edición:', error);
+            Swal.fire(
+                'Error',
+                'Ocurrió un error inesperado al intentar abrir el modal de edición.',
+                'error'
+            );
+        }
+    }
+
+    function saveEmpleado() {
+        try {
+            var id = $('#empleadoId').val();
+
+            console.log('->',id);
+
+            var nombre = $('#nombre').val();
+            var apellido = $('#apellido').val();
+            var email = $('#email').val();
+            var dui = $('#dui').val();
+            var numeroTelefonico = $('#numeroTel').val();
+            var tipoEmpleadoId = $('#tipoEmpleadoId').val();
+            
+            //tipoEmpleadoId = 3;
+            //var url = id  ? '/Empleado/Edit' : '/Empleado/Create';
+
+            var url = (id!=='0') ? '/Empleado/Edit' : '/Empleado/Create';
+            
+            var data = {
+                Id: parseInt(id),
+                Nombre: nombre,
+                Apellido: apellido,
+                Email: email,
+                Dui: dui,
+                NumeroTelefonico: numeroTelefonico,
+                TipoEmpleadoId: parseInt(tipoEmpleadoId) ,
+                EsActivo : true
+            };
+
+            console.log('',data);
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: data,
+                success: function (response) { 
+                    Swal.fire(
+                        'Guardado',
+                        'El empleado ha sido guardado correctamente.',
+                        'success'
+                    );
+                    /*$('#empleadoModal').modal('hide');*/
+                    location.reload(); // Recargar la tabla para mostrar los cambios
+                },
+                error: function () {
+                    Swal.fire(
+                        'Error',
+                        'Ocurrió un error al guardar el empleado.',
+                        'error'
+                    );
+                }
+            });
+        } catch (error) {
+            console.error('Error al guardar el empleado:', error);
+            Swal.fire(
+                'Error',
+                'Ocurrió un error inesperado al intentar guardar el empleado.',
+                'error'
+            );
+        }
+    }
+
+    function confirmDelete(id) {
+        try {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "¡No podrás revertir esto!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, eliminarlo!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Empleado/Delete',
+                        type: 'POST',
+                        data: { id: id },
+                        success: function (response) {
+                            Swal.fire(
+                                'Eliminado!',
+                                'El empleado ha sido eliminado.',
+                                'success'
+                            );
+                            $('#row-' + id).remove();
+                        },
+                        error: function () {
+                            Swal.fire(
+                                'Error',
+                                'Ocurrió un error al eliminar el empleado.',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('Error al intentar eliminar el empleado:', error);
+            Swal.fire(
+                'Error',
+                'Ocurrió un error inesperado al intentar eliminar el empleado.',
+                'error'
+            );
+        }
+    }
+
+</script>
+
+
+
